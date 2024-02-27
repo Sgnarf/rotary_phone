@@ -5,10 +5,12 @@ chat_completion = client.chat.completions.create(
     messages=[
         {
             "role": "user",
-            "content": "Say this is a test",
+            "content": "When was Albert Einstein born?",
         }
     ],
     # Just use whatever llama-cpp-python or whatever mounts for the model
     model="dummy",
+    #max_tokens = 20,
+    stop = ".",
 )
 print(chat_completion.choices[0].message.content)

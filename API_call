@@ -1,11 +1,67 @@
+import whisper
+import pyaudio
+import wave
+
+# Record in chunks of 1024 samples
+chunk = 1024 
+
+# 16 bits per sample
+sample_format = pyaudio.paInt16 
+chanels = 2
+
+# Record at 44400 samples per second
+smpl_rt = 44400 
+seconds = 5 # seconds its gonna be recording
+filename = "output.wav" # file its gonna be saved
+
+# Create an interface to PortAudio
+pa = pyaudio.PyAudio() 
+
+stream = pa.open(format=sample_format, channels=chanels,
+                rate=smpl_rt, input=True,
+                frames_per_buffer=chunk)
+
+print('recording started')
+
+# Initialize array that be used for storing frames
+frames = [] 
+
+# Store data in chunks by seconds
+for i in range(0, int(smpl_rt / chunk * seconds)):
+    data = stream.read(chunk)
+    frames.append(data)
+
+# Stop and close the stream
+stream.stop_stream()
+stream.close()
+
+# Terminate - PortAudio interface
+pa.terminate()
+
+print('recording ended')
+
+# Save the recorded data in a .wav format
+sf = wave.open(filename, 'wb')
+sf.setnchannels(chanels)
+sf.setsampwidth(pa.get_sample_size(sample_format))
+sf.setframerate(smpl_rt)
+sf.writeframes(b''.join(frames))
+sf.close()
+
+
+model = whisper.load_model("base")
+result = model.transcribe("output.wav")
+print(result["text"])
+
 from openai import OpenAI
+import time
 
 client = OpenAI(api_key='dummy', base_url='http://192.168.1.15:5000/v1/')
 chat_completion = client.chat.completions.create(
     messages=[
         {
             "role": "user",
-            "content": "When was Albert Einstein born?",
+            "content": result["text"],
         }
     ],
     # Just use whatever llama-cpp-python or whatever mounts for the model
@@ -14,3 +70,18 @@ chat_completion = client.chat.completions.create(
     stop = ".",
 )
 print(chat_completion.choices[0].message.content)
+
+from gtts import gTTS
+tts = gTTS(chat_completion.choices[0].message.content)
+tts.save('hello.mp3')
+
+import pygame
+
+def play_mp3(file_path):
+    pygame.mixer.init()
+    pygame.mixer.music.load(file_path)
+    pygame.mixer.music.play()
+
+# Example usage
+play_mp3("hello.mp3")
+time.sleep(10)

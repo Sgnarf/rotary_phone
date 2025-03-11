@@ -1,0 +1,54 @@
+from machine import Pin, Timer
+import time
+
+# Pin setup
+pulse_pin = Pin(16, Pin.IN, Pin.PULL_UP)  # GP16 for pulse input
+off_hook_pin = Pin(17, Pin.IN, Pin.PULL_UP)  # GP17 for off-hook input
+
+# Variables to track dial state
+pulse_count = 0
+last_pulse_state = pulse_pin.value()
+dialing = False
+number_dialed = ""
+
+# Debounce time (in milliseconds)
+debounce_time = 80
+
+# Timer for debouncing
+debounce_timer = Timer()
+
+def pulse_callback(pin):
+    global pulse_count, last_pulse_state, dialing, number_dialed
+    
+    current_state = pulse_pin.value()
+    if current_state != last_pulse_state:
+        debounce_timer.init(mode=Timer.ONE_SHOT, period=debounce_time, callback=lambda t: None)
+        if current_state == 0:  # Falling edge (pulse detected)
+            pulse_count += 1
+        last_pulse_state = current_state
+
+def off_hook_callback(pin):
+    global dialing, pulse_count, number_dialed
+    
+    if off_hook_pin.value() == 0:  # Off-hook (phone is in use)
+        dialing = True
+        pulse_count = 0
+        number_dialed = ""
+        print("Phone off-hook. Start dialing...")
+    else:  # On-hook (phone is idle)
+        if dialing:
+            dialing = False
+            if pulse_count > 0:
+                # Map pulse count to number (0 = 10 pulses)
+                number = pulse_count if pulse_count < 10 else 0
+                number_dialed += str(number)
+                print(f"Number dialed: {number_dialed}")
+            pulse_count = 0
+
+# Attach interrupts
+pulse_pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=pulse_callback)
+off_hook_pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=off_hook_callback)
+
+# Main loop
+while True:
+    time.sleep(0.1)  # Keep the script running

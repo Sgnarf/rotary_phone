@@ -2,6 +2,7 @@
 
 ## Schematics
 
+### Rotary Dial
 Rotary Dial Wire | Function | RasPi Pico W Pin 
 --- | --- | --- 
 White | Pulse Contact | GP16 (input)
@@ -9,6 +10,7 @@ Red | Pulse Ground | GND
 Blue | Off-Hook Contact | GP17 (input)
 Brown | Off-Hook Ground | GND
 
+### Phone Speaker
 Phone Speaker | Function | PAM8403 Amplifier 
 --- | --- | --- 
 Red | Speaker (+) | L OUT+ 
@@ -27,3 +29,9 @@ WS | Word Select | GP11
 DATA | Audio Data | GP9
 VCC | Power | 3.3V
 GND | Ground | GND
+
+### Phone Microphone 
+Phone Microphone | Function | RasPi Pico W Pin 
+--- | --- | --- 
+Blue | Microphone (+) | 3.3V (with a 330 ohm resistance)
+White | Microphone (-) | GND
